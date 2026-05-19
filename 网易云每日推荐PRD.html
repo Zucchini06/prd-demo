@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网易云音乐「每日推荐」PRD + 交互原型</title>
+<style>
+:root {
+  --bg: #fff; --text: #1a1a2e; --text2: #666; --border: #e8e8e8;
+  --accent: #c10d0d; --accent2: #ec4141; --card: #fafafa;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --tag-bg: #fef0f0; --tag-text: #c10d0d;
+  --code-bg: #f5f5f5; --phone-bg: #f0f0f0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a2e; --text: #e8e8e8; --text2: #999; --border: #333;
+    --accent: #ec4141; --accent2: #ff5252; --card: #222;
+    --shadow: 0 2px 12px rgba(0,0,0,0.3);
+    --tag-bg: #3a1a1a; --code-bg: #2a2a3a; --phone-bg: #111;
+  }
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height:1.7; }
+.container { max-width: 900px; margin:0 auto; padding: 40px 24px; }
+
+/* PRD sections */
+.prd-header { text-align:center; padding:60px 0 40px; border-bottom:2px solid var(--accent); margin-bottom:40px; }
+.prd-header h1 { font-size:32px; font-weight:800; margin-bottom:8px; }
+.prd-header .meta { color:var(--text2); font-size:14px; }
+.prd-header .meta span { margin:0 12px; }
+
+section { margin-bottom:48px; }
+section h2 { font-size:22px; font-weight:700; margin-bottom:20px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+section h2 .num { background:var(--accent); color:#fff; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+section h3 { font-size:16px; font-weight:600; margin:16px 0 8px; }
+section p { margin-bottom:12px; color:var(--text2); }
+
+.tag { display:inline-block; background:var(--tag-bg); color:var(--tag-text); padding:2px 10px; border-radius:12px; font-size:13px; margin:2px 4px; }
+.card { background:var(--card); border-radius:12px; padding:24px; margin:16px 0; box-shadow:var(--shadow); }
+.card h4 { font-size:15px; margin-bottom:8px; }
+
+/* Flow diagram */
+.flow { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:20px; background:var(--card); border-radius:12px; margin:16px 0; font-size:14px; overflow-x:auto; }
+.flow .node { background:var(--accent); color:#fff; padding:8px 16px; border-radius:8px; white-space:nowrap; }
+.flow .arrow { color:var(--accent); font-weight:bold; }
+.flow .node.secondary { background:#555; }
+.flow .branch { display:flex; flex-direction:column; gap:6px; }
+
+/* Table */
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+th, td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+th { background:var(--card); font-weight:600; }
+tr:hover { background:var(--card); }
+
+/* Prototype section */
+.phone-wrapper { display:flex; justify-content:center; align-items:center; padding:20px; background:var(--phone-bg); border-radius:16px; }
+.phone { width:375px; height:750px; background:#121212; border-radius:32px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.4), 0 0 0 3px #333, 0 0 0 6px #1a1a1a; }
+.phone-screen { width:100%; height:100%; background:#1a1a1a; position:relative; overflow:hidden; }
+.phone-screen.light { background:#f5f5f5; }
+.phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:28px; background:#000; border-radius:0 0 16px 16px; z-index:100; }
+
+/* List Page */
+.page { position:absolute; top:0; left:0; width:100%; height:100%; transition:transform 0.4s cubic-bezier(0.25,0.8,0.25,1); display:flex; flex-direction:column; }
+.page.hidden-left { transform:translateX(-100%); }
+.page.hidden-right { transform:translateX(100%); }
+.page.hidden-bottom { transform:translateY(100%); }
+
+.page-header { padding:40px 20px 12px; text-align:center; position:relative; z-index:2; }
+.page-header .date { font-size:13px; color:#999; margin-bottom:2px; }
+.page-header .title { font-size:20px; font-weight:700; color:#fff; }
+.page-header .cover-bg { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; filter:blur(40px) brightness(0.4); z-index:-1; }
+.play-all { margin:12px 20px; padding:10px 0; background:linear-gradient(135deg,#c10d0d,#ec4141); border-radius:24px; text-align:center; color:#fff; font-size:14px; font-weight:600; cursor:pointer; transition:transform 0.15s, opacity 0.15s; }
+.play-all:active { transform:scale(0.97); opacity:0.85; }
+
+.song-list { flex:1; overflow-y:auto; padding:0 16px 20px; -webkit-overflow-scrolling:touch; }
+.song-list::-webkit-scrollbar { width:0; }
+.song-item { display:flex; align-items:center; padding:10px 8px; border-radius:10px; position:relative; cursor:pointer; touch-action:pan-y; user-select:none; transition:transform 0.25s, background 0.2s; }
+.song-item:active { background:rgba(255,255,255,0.05); }
+.song-item .idx { width:28px; text-align:center; font-size:13px; color:#888; flex-shrink:0; }
+.song-item .cover { width:44px; height:44px; border-radius:6px; background:#333; flex-shrink:0; object-fit:cover; }
+.song-item .info { flex:1; margin-left:10px; min-width:0; }
+.song-item .info .name { font-size:14px; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.song-item .info .artist { font-size:12px; color:#888; margin-top:2px; }
+.song-item .dur { font-size:12px; color:#666; margin:0 8px; }
+
+.swipe-bg { position:absolute; top:0; height:100%; display:flex; align-items:center; font-size:13px; font-weight:600; padding:0 20px; border-radius:10px; z-index:-1; }
+.swipe-bg.left { right:0; background:#c10d0d; color:#fff; border-radius:0 10px 10px 0; }
+.swipe-bg.right { left:0; background:#ec4141; color:#fff; border-radius:10px 0 0 10px; }
+
+/* Player Page */
+.player-bg { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; filter:blur(60px) brightness(0.25); z-index:0; }
+.player-content { position:relative; z-index:1; display:flex; flex-direction:column; height:100%; padding-top:40px; }
+.player-top { display:flex; justify-content:space-between; align-items:center; padding:0 20px; }
+.player-top .back { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; color:#fff; transition:background 0.2s; }
+.player-top .back:active { background:rgba(255,255,255,0.3); }
+.player-top .share { color:#fff; font-size:13px; opacity:0.7; cursor:pointer; }
+
+.player-disc { flex:1; display:flex; align-items:center; justify-content:center; position:relative; }
+.player-disc .disc { width:220px; height:220px; border-radius:50%; position:relative; }
+.player-disc .disc img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.player-disc .disc.spinning { animation:spin 20s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.player-disc .disc.paused { animation-play-state:paused; }
+.player-disc .disc-hole { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:52px; height:52px; border-radius:50%; background:#1a1a1a; border:3px solid #333; }
+.player-disc .arm { position:absolute; top:-20px; right:-40px; width:80px; height:120px; z-index:5; transition:transform 0.5s; }
+.player-disc .arm.playing { transform:rotate(-15deg); }
+
+.lyric-area { height:100px; overflow:hidden; text-align:center; padding:0 30px; position:relative; }
+.lyric-area .lyric-line { color:#666; font-size:14px; padding:6px 0; transition:all 0.4s; }
+.lyric-area .lyric-line.active { color:#fff; font-size:16px; font-weight:600; }
+
+.player-controls { padding:0 30px 20px; }
+.progress-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.progress-bar .time { font-size:11px; color:#888; width:36px; }
+.progress-bar .track { flex:1; height:3px; background:#444; border-radius:2px; position:relative; cursor:pointer; }
+.progress-bar .track-fill { height:100%; background:#c10d0d; border-radius:2px; width:35%; }
+.progress-bar .track-thumb { position:absolute; top:50%; left:35%; transform:translate(-50%,-50%); width:12px; height:12px; background:#fff; border-radius:50%; }
+
+.ctrl-btns { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.ctrl-btns .btn { color:#ccc; font-size:18px; cursor:pointer; padding:8px; transition:color 0.15s; }
+.ctrl-btns .btn:active { color:#fff; }
+.ctrl-btns .btn-play { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#c10d0d,#ec4141); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; cursor:pointer; transition:transform 0.15s; }
+.ctrl-btns .btn-play:active { transform:scale(0.92); }
+
+.actions { display:flex; justify-content:space-around; }
+.actions .act { color:#888; font-size:12px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:color 0.15s; }
+.actions .act:active { color:#fff; }
+.actions .act .icon { font-size:18px; }
+.actions .act.liked { color:#ec4141; }
+
+/* Feedback Modal */
+.modal-mask { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:50; transition:opacity 0.3s; opacity:0; pointer-events:none; }
+.modal-mask.show { opacity:1; pointer-events:auto; }
+.modal-sheet { position:absolute; bottom:0; left:0; width:100%; background:#1e1e1e; border-radius:20px 20px 0 0; padding:24px 20px 40px; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); }
+.modal-mask.show .modal-sheet { transform:translateY(0); }
+.modal-sheet h4 { color:#fff; font-size:16px; margin-bottom:16px; }
+.modal-sheet .reason-grid { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.modal-sheet .reason-chip { padding:10px 18px; border-radius:20px; border:1px solid #444; color:#ccc; font-size:13px; cursor:pointer; transition:all 0.2s; }
+.modal-sheet .reason-chip.selected { background:rgba(193,13,13,0.2); border-color:#c10d0d; color:#c10d0d; }
+.modal-sheet textarea { width:100%; height:60px; background:#2a2a2a; border:1px solid #444; border-radius:10px; color:#fff; padding:12px; font-size:13px; resize:none; outline:none; font-family:inherit; margin-bottom:16px; }
+.modal-sheet textarea:focus { border-color:#c10d0d; }
+.modal-sheet .submit-row { display:flex; gap:12px; }
+.modal-sheet .submit-row button { flex:1; padding:12px; border-radius:24px; border:none; font-size:14px; font-weight:600; cursor:pointer; transition:transform 0.15s; }
+.modal-sheet .submit-row button:active { transform:scale(0.96); }
+.modal-sheet .submit-row .btn-skip { background:#333; color:#ccc; }
+.modal-sheet .submit-row .btn-submit { background:linear-gradient(135deg,#c10d0d,#ec4141); color:#fff; }
+
+.toast { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 28px; border-radius:20px; font-size:14px; z-index:100; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+/* Page tabs */
+.page-tabs { display:flex; justify-content:center; gap:8px; padding:16px 0 0; }
+.page-tabs .tab { padding:6px 16px; border-radius:16px; font-size:12px; cursor:pointer; background:#333; color:#aaa; border:none; transition:all 0.2s; }
+.page-tabs .tab.active { background:var(--accent); color:#fff; }
+
+/* Skeleton */
+.skeleton { background:linear-gradient(90deg,#2a2a2a 25%,#333 50%,#2a2a2a 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; }
+@keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.metric-card { background:var(--card); border-radius:12px; padding:20px; text-align:center; box-shadow:var(--shadow); }
+.metric-card .value { font-size:28px; font-weight:800; color:var(--accent); }
+.metric-card .label { font-size:13px; color:var(--text2); margin-top:4px; }
+
+.legend { display:flex; justify-content:center; gap:24px; font-size:12px; color:var(--text2); margin-top:8px; }
+.legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; }
+.legend .like::before { background:#ec4141; }
+.legend .dislike::before { background:#c10d0d; }
+
+pre { background:var(--code-bg); border-radius:8px; padding:16px; overflow-x:auto; font-size:13px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- PRD Header -->
+<header class="prd-header">
+  <h1>网易云音乐「每日推荐」歌单模块</h1>
+  <p class="meta">产品需求文档 + 交互原型 <span>|</span> 2026-05-19 <span>|</span> 面试作品 v1.0</p>
+</header>
+
+<!-- 1. 背景与目标 -->
+<section>
+  <h2><span class="num">1</span>背景与目标</h2>
+
+  <h3>项目背景</h3>
+  <p>「每日推荐」是网易云音乐日活最高的核心模块之一，每天为 3000 万+ 用户生成个性化推荐歌单。当前模块存在三个问题：列表页反馈路径深（需进入三级菜单）、播放页信息层级拥挤、负反馈收集粗糙（仅"不喜欢"二值判断），导致推荐模型收到的信号质量低，用户满意度停滞。</p>
+
+  <h3>产品目标</h3>
+  <div class="card">
+    <h4>核心指标</h4>
+    <table>
+      <tr><th>指标</th><th>现状</th><th>目标</th><th>衡量方式</th></tr>
+      <tr><td>每日推荐完播率</td><td>58%</td><td>≥ 72%</td><td>播放完成占比</td></tr>
+      <tr><td>负反馈收集率</td><td>3.2%</td><td>≥ 15%</td><td>不感兴趣操作占比</td></tr>
+      <tr><td>推荐满意度 NPS</td><td>38</td><td>≥ 50</td><td>季度用户调研</td></tr>
+      <tr><td>次日留存</td><td>62%</td><td>≥ 70%</td><td>隔日回访用户占比</td></tr>
+    </table>
+  </div>
+
+  <h3>设计原则</h3>
+  <p>轻反馈、重感知——让用户在听歌过程中自然表达偏好，而非打断流量填问卷。所有操作 ≤ 2 步完成。</p>
+</section>
+
+<!-- 2. 用户场景 -->
+<section>
+  <h2><span class="num">2</span>用户场景</h2>
+
+  <div class="card">
+    <h4>场景一：晨间通勤 — 快速发现新歌</h4>
+    <p>小张，28 岁，互联网运营。每天 8:30 地铁通勤 40 分钟，打开网易云「每日推荐」，从 30 首里挑 5-6 首喜欢的加入歌单，遇到不喜欢的快速跳过。诉求：操作快、加载快、离线可听。</p>
+    <span class="tag">通勤场景</span><span class="tag">快速筛选</span><span class="tag">离线缓存</span>
+  </div>
+
+  <div class="card">
+    <h4>场景二：深夜独处 — 沉浸式听歌</h4>
+    <p>小李，22 岁，大学生。睡前刷每日推荐，切到播放页沉浸式听完整首，看歌词、看评论。偶尔遇到很喜欢的会分享到朋友圈。诉求：沉浸感强、歌词精准、社交分享。</p>
+    <span class="tag">沉浸消费</span><span class="tag">歌词场景</span><span class="tag">社交传播</span>
+  </div>
+
+  <div class="card">
+    <h4>场景三：干活背景音 — 长时播放 + 偶发反馈</h4>
+    <p>小王，31 岁，设计师。工作时打开每日推荐当背景音，偶尔注意到不喜欢的歌才会点一下反馈，不想打断工作流。诉求：无操作自动续播、反馈路径短。</p>
+    <span class="tag">后台播放</span><span class="tag">低打扰</span><span class="tag">自动续播</span>
+  </div>
+</section>
+
+<!-- 3. 信息架构 & 页面流 -->
+<section>
+  <h2><span class="num">3</span>信息架构 &amp; 页面流</h2>
+
+  <div class="flow">
+    <div class="node">每日推荐入口</div>
+    <span class="arrow">→</span>
+    <div class="node">列表页<br><small>30首每日推荐</small></div>
+    <span class="arrow">→</span>
+    <div class="branch">
+      <span style="color:#c10d0d;font-size:12px;">点击歌曲</span>
+      <span style="color:#ec4141;font-size:12px;">左滑不感兴趣</span>
+      <span style="color:#fff;font-size:12px;">右滑收藏</span>
+    </div>
+    <span class="arrow">→</span>
+    <div class="node">播放页<br><small>全屏沉浸</small></div>
+    <span class="arrow">↔</span>
+    <div class="node secondary">反馈弹窗<br><small>半屏滑出</small></div>
+  </div>
+
+  <p>列表页是信息枢纽，播放页是消费终点，反馈弹窗是双向信令通道——用户的每一次反馈同时更新前端 UI 和云端推荐模型。</p>
+
+  <h3>状态流转</h3>
+  <div class="flow">
+    <div class="node">加载中</div><span class="arrow">→</span>
+    <div class="node">有数据</div><span class="arrow">→</span>
+    <div class="node">列表页</div>
+  </div>
+  <div class="flow" style="margin-top:8px;">
+    <div class="node secondary">加载超时</div><span class="arrow">→</span>
+    <div class="node secondary">重试页</div>
+  </div>
+  <div class="flow" style="margin-top:8px;">
+    <div class="node secondary">今日无数据</div><span class="arrow">→</span>
+    <div class="node secondary">空状态页</div>
+  </div>
+</section>
+
+<!-- 4. 视觉与交互细节 -->
+<section>
+  <h2><span class="num">4</span>视觉与交互细节</h2>
+
+  <h3>列表页</h3>
+  <div class="card">
+    <ul style="padding-left:20px;color:var(--text2);font-size:14px;line-height:2;">
+      <li>顶部日期标识 + 封面提取主色渐变背景，营造每日新鲜感</li>
+      <li>歌曲行高 64px，封面 44×44 圆角 6px，歌名 14px 白色，歌手 12px #888</li>
+      <li>时长右对齐，12px #666，格式 m:ss</li>
+      <li><strong>左滑手势</strong>：主行左移露出红色「不感兴趣」底，释放后触发反馈弹窗</li>
+      <li><strong>右滑手势</strong>：主行右移露出红色心形底，释放后收藏（心形填充动画）</li>
+      <li>播放全部按钮悬浮于列表上方，毛玻璃半透明背景</li>
+      <li>下拉刷新（Pull to Refresh）重新请求今日推荐</li>
+    </ul>
+  </div>
+
+  <h3>播放页</h3>
+  <div class="card">
+    <ul style="padding-left:20px;color:var(--text2);font-size:14px;line-height:2;">
+      <li>全屏暗色 + 封面毛玻璃 blur(60px) + brightness(0.25) 背景</li>
+      <li>黑胶唱片 220px 居中旋转（播放态 20s/圈），暂停态停止旋转</li>
+      <li>唱片中央 52px 圆孔 + 金属边框，右侧唱臂随播放/暂停摆入/摆出</li>
+      <li>歌词区域 100px，当前行 16px 白色加粗，前后行 14px 半透明</li>
+      <li>进度条可拖拽，已播部分主题色，未播部分 #444</li>
+      <li>底部：上一首 | 播放/暂停（56px 主题色圆按钮）| 下一首</li>
+      <li>操作栏：收藏（已收藏红色实心）、下载、评论、分享</li>
+      <li>左滑切换至下一首，右滑提示反馈弹窗</li>
+    </ul>
+  </div>
+
+  <h3>反馈弹窗</h3>
+  <div class="card">
+    <ul style="padding-left:20px;color:var(--text2);font-size:14px;line-height:2;">
+      <li>底部半屏滑出，背景 rgba(0,0,0,0.6) 半透明遮罩，点击遮罩关闭</li>
+      <li>标题「告诉我们你不喜欢这首歌的原因」</li>
+      <li>快捷原因：<span class="tag">不感兴趣</span><span class="tag">听腻了</span><span class="tag">质量差</span> — 多选 Chip</li>
+      <li>补充输入框（选填，60px 高度，placeholder「补充更多原因…」）</li>
+      <li>提交按钮（主题色渐变）+ 跳过按钮（灰色），提交后 Toast 提示并关闭</li>
+      <li>移除歌曲动画：主行向左滑出 + 下一行上移填充</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5. 业务流程图 / 异常流程 -->
+<section>
+  <h2><span class="num">5</span>业务流程 &amp; 异常处理</h2>
+
+  <h3>正常流程</h3>
+  <pre>用户进入 → 请求推荐列表 → 渲染30首 → 用户浏览 → [点击播放 | 左滑反馈 | 右滑收藏]
+播放页 → 自动续播 → 播完或用户操作 → 反馈弹窗(可选) → 返回列表</pre>
+
+  <h3>异常流程</h3>
+  <table>
+    <tr><th>异常类型</th><th>触发条件</th><th>用户看到</th><th>系统行为</th></tr>
+    <tr><td>网络超时</td><td>请求 > 5s 无响应</td><td>骨架屏 → 重试图</td><td>自动重试 3 次，间隔 2s</td></tr>
+    <tr><td>服务端错误</td><td>4xx / 5xx</td><td>错误插画 + 重试按钮</td><td>记录错误日志，降级兜底热门歌单</td></tr>
+    <tr><td>今日无数据</td><td>新用户 / 冷启动</td><td>空状态插画 + 引导文案</td><td>引导完成音乐口味测试</td></tr>
+    <tr><td>音频加载失败</td><td>版权下架 / CDN 故障</td><td>Toast「播放失败」+ 自动跳下一首</td><td>标记歌曲不可用，反馈推荐模型</td></tr>
+    <tr><td>歌词缺失</td><td>纯音乐 / 未同步</td><td>显示「纯音乐，请欣赏」</td><td>不影响播放流程</td></tr>
+    <tr><td>列表为空(已全部反馈)</td><td>用户连续 dislike</td><td>空状态「明天再来吧」</td><td>增加推荐多样性权重</td></tr>
+  </table>
+
+  <h3>边界条件</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+    <span class="tag">首次使用：引导卡片 + 冷启动推荐</span>
+    <span class="tag">海外用户：版权区域限制提示</span>
+    <span class="tag">弱网环境：低质量音频优先</span>
+    <span class="tag">隐私模式：不记录收听历史</span>
+    <span class="tag">字体缩放：rem 相对单位适配</span>
+  </div>
+</section>
+
+<!-- 6. HTML 交互原型 -->
+<section>
+  <h2><span class="num">6</span>HTML 交互原型</h2>
+  <p style="color:var(--text2);margin-bottom:16px;">下方为可交互的手机模拟器，含列表页、播放页、反馈弹窗三个核心页面。</p>
+
+  <div class="legend">
+    <span class="like">右滑收藏</span>
+    <span class="dislike">左滑反馈</span>
+    <span>点击歌曲进入播放</span>
+  </div>
+
+  <div class="page-tabs" style="padding-bottom:12px;">
+    <button class="tab active" onclick="switchToPage('list')">列表页</button>
+    <button class="tab" onclick="switchToPage('player')">播放页</button>
+    <button class="tab" onclick="demoDislike()">触发反馈弹窗</button>
+  </div>
+
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-screen" id="phoneScreen">
+        <div class="phone-notch"></div>
+
+        <!-- LIST PAGE -->
+        <div class="page" id="listPage">
+          <div class="page-header">
+            <div class="cover-bg" style="background:linear-gradient(135deg,#2d1b69,#c10d0d);"></div>
+            <div class="date">2026 / 05 / 19</div>
+            <div class="title">每日推荐</div>
+          </div>
+          <div class="play-all" onclick="playAll()">▷ 播放全部</div>
+          <div class="song-list" id="songList"></div>
+        </div>
+
+        <!-- PLAYER PAGE -->
+        <div class="page hidden-right" id="playerPage">
+          <div class="player-bg" id="playerBg"></div>
+          <div class="player-content">
+            <div class="player-top">
+              <div class="back" onclick="switchToPage('list')">←</div>
+              <div style="color:#fff;font-size:15px;font-weight:600;" id="playerTitle"></div>
+              <div class="share" onclick="alert('分享到朋友圈/微信/微博')">分享</div>
+            </div>
+            <div class="player-disc">
+              <div class="disc spinning" id="disc">
+                <img id="discCover" src="" alt="">
+                <div class="disc-hole"></div>
+              </div>
+            </div>
+            <div class="lyric-area" id="lyricArea"></div>
+            <div class="player-controls">
+              <div class="progress-bar">
+                <span class="time" id="curTime">0:00</span>
+                <div class="track"><div class="track-fill" id="trackFill"></div></div>
+                <span class="time" id="totalTime">0:00</span>
+              </div>
+              <div class="ctrl-btns">
+                <div class="btn" onclick="prevSong()">⏮</div>
+                <div class="btn-play" id="btnPlay" onclick="togglePlay()">▶</div>
+                <div class="btn" onclick="nextSong()">⏭</div>
+              </div>
+              <div class="actions">
+                <div class="act" id="actLike" onclick="toggleLike()"><span class="icon">♥</span>收藏</div>
+                <div class="act"><span class="icon">⬇</span>下载</div>
+                <div class="act" onclick="showFeedback()"><span class="icon">✎</span>反馈</div>
+                <div class="act"><span class="icon">↗</span>分享</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEEDBACK MODAL -->
+        <div class="modal-mask" id="feedbackModal">
+          <div class="modal-sheet">
+            <h4>为什么不喜欢这首歌？</h4>
+            <div class="reason-grid" id="reasonGrid">
+              <div class="reason-chip" onclick="toggleReason(this)">不感兴趣</div>
+              <div class="reason-chip" onclick="toggleReason(this)">听腻了</div>
+              <div class="reason-chip" onclick="toggleReason(this)">质量差</div>
+            </div>
+            <textarea placeholder="补充更多原因（选填）..."></textarea>
+            <div class="submit-row">
+              <button class="btn-skip" onclick="hideFeedback()">跳过</button>
+              <button class="btn-submit" onclick="submitFeedback()">提交</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOAST -->
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 数据指标建议 -->
+<section>
+  <h2><span class="num">7</span>数据指标建议</h2>
+
+  <h3>北极星指标</h3>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="value">≥72%</div><div class="label">每日推荐完播率</div></div>
+  </div>
+
+  <h3>过程指标</h3>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="value">≥15%</div><div class="label">负反馈收集率</div></div>
+    <div class="metric-card"><div class="value">≥65%</div><div class="label">推荐点击率</div></div>
+    <div class="metric-card"><div class="value">≥70%</div><div class="label">次日回访率</div></div>
+    <div class="metric-card"><div class="value">&lt;8%</div><div class="label">连续Dislike后流失率</div></div>
+  </div>
+
+  <h3>负反馈信号分类</h3>
+  <table>
+    <tr><th>信号类型</th><th>UI 对应</th><th>模型权重</th><th>生效速度</th></tr>
+    <tr><td>不感兴趣</td><td>反馈弹窗 Chip 1</td><td>高（-1.0）</td><td>次日生效</td></tr>
+    <tr><td>听腻了</td><td>反馈弹窗 Chip 2</td><td>中（-0.5）</td><td>3 日内衰减</td></tr>
+    <tr><td>质量差</td><td>反馈弹窗 Chip 3</td><td>高（-0.8）</td><td>当日生效</td></tr>
+    <tr><td>跳过（< 10s）</td><td>自动切歌</td><td>低（-0.3）</td><td>周级聚合</td></tr>
+    <tr><td>收藏</td><td>右滑/点击心形</td><td>正（+1.0）</td><td>实时生效</td></tr>
+  </table>
+</section>
+
+</div><!-- .container -->
+
+<script>
+// ========== DATA ==========
+const songs = [
+  { id:1, name:'晴天', artist:'周杰伦', album:'叶惠美', dur:269, cover:'https://picsum.photos/seed/s1/200/200', liked:false,
+    lyrics:['故事的小黄花','从出生那年就飘着','童年的荡秋千','随记忆一直晃到现在','Re So So Si Do Si La','So La Si Si Si Si La Si La So','吹着前奏 望着天空','我想起花瓣试着掉落'] },
+  { id:2, name:'水星记', artist:'郭顶', album:'飞行器的执行周期', dur:324, cover:'https://picsum.photos/seed/s2/200/200', liked:false,
+    lyrics:['还要多远才能进入你的心','还要多久才能和你接近','咫尺远近却无法靠近的那个人','也等着和你相遇','环游的行星 怎么可以','拥有你'] },
+  { id:3, name:'Shape of You', artist:'Ed Sheeran', album:'÷', dur:234, cover:'https://picsum.photos/seed/s3/200/200', liked:false,
+    lyrics:['The club isn\'t the best place to find a lover','So the bar is where I go','Me and my friends at the table doing shots','Drinking fast and then we talk slow'] },
+  { id:4, name:'起风了', artist:'买辣椒也用券', album:'起风了', dur:306, cover:'https://picsum.photos/seed/s4/200/200', liked:false,
+    lyrics:['这一路上走走停停','顺着少年漂流的痕迹','迈出车站的前一刻','竟有些犹豫','不禁笑这近乡情怯','仍无可避免'] },
+  { id:5, name:'Counting Stars', artist:'OneRepublic', album:'Native', dur:258, cover:'https://picsum.photos/seed/s5/200/200', liked:false,
+    lyrics:['Lately I\'ve been, I\'ve been losing sleep','Dreaming about the things that we could be','But baby I\'ve been, I\'ve been praying hard','Said no more counting dollars'] },
+  { id:6, name:'戒烟', artist:'李荣浩', album:'耳朵', dur:288, cover:'https://picsum.photos/seed/s6/200/200', liked:false,
+    lyrics:['已经为了变得更好','戒掉了浮躁 却难忘你的笑','我看着你的脸 轻刷着和弦','情人节卡片 手写的永远'] },
+  { id:7, name:'Faded', artist:'Alan Walker', album:'Different World', dur:213, cover:'https://picsum.photos/seed/s7/200/200', liked:false,
+    lyrics:['You were the shadow to my light','Did you feel us','Another start','You fade away'] },
+  { id:8, name:'年少有为', artist:'李荣浩', album:'耳朵', dur:273, cover:'https://picsum.photos/seed/s8/200/200', liked:false,
+    lyrics:['假如我年少有为不自卑','懂得什么是珍贵','那些美梦','没给你 我一生有愧'] },
+  { id:9, name:'光年之外', artist:'邓紫棋', album:'光年之外', dur:233, cover:'https://picsum.photos/seed/s9/200/200', liked:false,
+    lyrics:['感受停在我发端的指尖','如何瞬间 冻结时间','记住望着我坚定的双眼','也许已经 没有明天'] },
+  { id:10, name:'Love Story', artist:'Taylor Swift', album:'Fearless', dur:236, cover:'https://picsum.photos/seed/s10/200/200', liked:false,
+    lyrics:['We were both young when I first saw you','I close my eyes and the flashback starts','I\'m standing there','On a balcony in summer air'] },
+  { id:11, name:'孤勇者', artist:'陈奕迅', album:'孤勇者', dur:271, cover:'https://picsum.photos/seed/s11/200/200', liked:false,
+    lyrics:['都 是勇敢的','你额头的伤口 你的 不同 你犯的错','都 不必隐藏','你破旧的玩偶 你的 面具 你的自我'] },
+  { id:12, name:'夜曲', artist:'周杰伦', album:'十一月的萧邦', dur:225, cover:'https://picsum.photos/seed/s12/200/200', liked:false,
+    lyrics:['一群嗜血的蚂蚁 被腐肉所吸引','我面无表情 看孤独的风景','失去你 爱恨开始分明','失去你 还有什么事好关心'] }
+];
+
+let currentSongIdx = 0;
+let isPlaying = false;
+let lyricInterval = null;
+
+function formatTime(s) { return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+// Build song list
+function buildList() {
+  const container = document.getElementById('songList');
+  container.innerHTML = songs.map((s,i) => `
+    <div class="song-item" id="song${i}"
+         data-idx="${i}"
+         ontouchstart="handleTouchStart(event,${i})"
+         ontouchmove="handleTouchMove(event,${i})"
+         ontouchend="handleTouchEnd(event,${i})"
+         onclick="playSong(${i})">
+      <div class="swipe-bg right">♥ 收藏</div>
+      <div class="swipe-bg left">不喜欢</div>
+      <span class="idx">${String(i+1).padStart(2,'0')}</span>
+      <img class="cover" src="${s.cover}" alt="" loading="lazy" onerror="this.style.background='linear-gradient(135deg,'+['#667eea','#764ba2','#f093fb','#f5576c','#4facfe','#00f2fe','#43e97b','#fa709a'][i%8]+','+['#764ba2','#667eea','#f5576c','#f093fb','#00f2fe','#43e97b','#30cfd0','#f5576c'][i%8]+')'">
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="artist">${s.artist} · ${s.album}</div>
+      </div>
+      <span class="dur">${formatTime(s.dur)}</span>
+    </div>
+  `).join('');
+}
+
+// Touch swipe
+let touchStartX = 0, touchCurrentX = 0, touchActiveIdx = -1;
+function handleTouchStart(e, idx) {
+  touchStartX = e.touches[0].clientX;
+  touchCurrentX = touchStartX;
+  touchActiveIdx = idx;
+}
+function handleTouchMove(e, idx) {
+  if (touchActiveIdx !== idx) return;
+  touchCurrentX = e.touches[0].clientX;
+  const dx = touchCurrentX - touchStartX;
+  const el = document.getElementById('song'+idx);
+  if (el) {
+    if (Math.abs(dx) < 80 && Math.abs(dx) > 5) {
+      el.style.transform = `translateX(${dx}px)`;
+    }
+  }
+}
+function handleTouchEnd(e, idx) {
+  const dx = touchCurrentX - touchStartX;
+  const el = document.getElementById('song'+idx);
+  if (!el) { touchActiveIdx = -1; return; }
+  el.style.transform = '';
+  if (dx > 60) {
+    songs[idx].liked = !songs[idx].liked;
+    showToast(songs[idx].liked ? '已收藏 ♥' : '已取消收藏');
+    buildList();
+  } else if (dx < -60) {
+    currentSongIdx = idx;
+    showFeedback();
+    buildList();
+  }
+  touchActiveIdx = -1;
+}
+
+// Demo: trigger dislike from tab button
+function demoDislike() {
+  currentSongIdx = Math.floor(Math.random() * songs.length);
+  showFeedback();
+}
+
+// Page switching
+function switchToPage(page) {
+  const list = document.getElementById('listPage');
+  const player = document.getElementById('playerPage');
+  if (page === 'list') {
+    list.className = 'page';
+    player.className = 'page hidden-right';
+    stopMusic();
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  } else if (page === 'player') {
+    list.className = 'page hidden-left';
+    player.className = 'page';
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===1));
+  }
+}
+
+function playAll() { playSong(0); }
+
+function playSong(idx) {
+  currentSongIdx = idx;
+  const s = songs[idx];
+  document.getElementById('playerTitle').textContent = s.name + ' - ' + s.artist;
+  document.getElementById('discCover').src = s.cover;
+  document.getElementById('discCover').onerror = function() { this.style.background='linear-gradient(135deg,#667eea,#764ba2)'; };
+  document.getElementById('playerBg').src = s.cover;
+  document.getElementById('playerBg').onerror = function() { this.style.display='none'; };
+  document.getElementById('totalTime').textContent = formatTime(s.dur);
+  document.getElementById('curTime').textContent = '0:00';
+  document.getElementById('trackFill').style.width = '0%';
+  document.getElementById('actLike').className = s.liked ? 'act liked' : 'act';
+
+  // Load lyrics
+  const lyricArea = document.getElementById('lyricArea');
+  if (s.lyrics && s.lyrics.length) {
+    lyricArea.innerHTML = s.lyrics.map((l,i) =>
+      `<div class="lyric-line ${i===0?'active':''}">${l}</div>`
+    ).join('');
+  } else {
+    lyricArea.innerHTML = '<div class="lyric-line active" style="color:#fff;">纯音乐，请欣赏</div>';
+  }
+
+  document.getElementById('btnPlay').textContent = '▶';
+  document.getElementById('disc').classList.remove('spinning','paused');
+  switchToPage('player');
+  startMusic();
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    stopMusic();
+    document.getElementById('btnPlay').textContent = '▶';
+    document.getElementById('disc').classList.add('paused');
+  } else {
+    startMusic();
+    document.getElementById('btnPlay').textContent = '❚❚';
+    document.getElementById('disc').classList.remove('paused');
+    document.getElementById('disc').classList.add('spinning');
+  }
+}
+
+function startMusic() {
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '❚❚';
+  const disc = document.getElementById('disc');
+  disc.classList.add('spinning');
+  disc.classList.remove('paused');
+
+  const s = songs[currentSongIdx];
+  let elapsed = 0;
+  if (lyricInterval) clearInterval(lyricInterval);
+  lyricInterval = setInterval(() => {
+    elapsed++;
+    document.getElementById('curTime').textContent = formatTime(elapsed);
+    document.getElementById('trackFill').style.width = (elapsed / s.dur * 100) + '%';
+
+    // Lyric sync: scroll lyrics
+    if (s.lyrics && s.lyrics.length) {
+      const idx = Math.min(Math.floor(elapsed / (s.dur / s.lyrics.length)), s.lyrics.length-1);
+      const lines = document.getElementById('lyricArea').querySelectorAll('.lyric-line');
+      lines.forEach((l,i) => l.className = i===idx ? 'lyric-line active' : 'lyric-line');
+      if (lines[idx]) lines[idx].scrollIntoView({block:'center',behavior:'smooth'});
+    }
+
+    if (elapsed >= s.dur) {
+      clearInterval(lyricInterval);
+      nextSong();
+    }
+  }, 980);
+}
+
+function stopMusic() {
+  isPlaying = false;
+  document.getElementById('btnPlay').textContent = '▶';
+  document.getElementById('disc').classList.add('paused');
+  if (lyricInterval) { clearInterval(lyricInterval); lyricInterval = null; }
+}
+
+function nextSong() {
+  stopMusic();
+  currentSongIdx = (currentSongIdx + 1) % songs.length;
+  playSong(currentSongIdx);
+}
+function prevSong() {
+  stopMusic();
+  currentSongIdx = (currentSongIdx - 1 + songs.length) % songs.length;
+  playSong(currentSongIdx);
+}
+
+function toggleLike() {
+  songs[currentSongIdx].liked = !songs[currentSongIdx].liked;
+  document.getElementById('actLike').className = songs[currentSongIdx].liked ? 'act liked' : 'act';
+  showToast(songs[currentSongIdx].liked ? '已收藏 ♥' : '已取消收藏');
+}
+
+// Feedback
+let selectedReasons = [];
+function showFeedback() {
+  selectedReasons = [];
+  document.querySelectorAll('#reasonGrid .reason-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelector('#feedbackModal textarea').value = '';
+  document.getElementById('feedbackModal').classList.add('show');
+}
+function hideFeedback() {
+  document.getElementById('feedbackModal').classList.remove('show');
+}
+function toggleReason(el) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    selectedReasons.push(el.textContent);
+  } else {
+    selectedReasons = selectedReasons.filter(r => r !== el.textContent);
+  }
+}
+function submitFeedback() {
+  const text = document.querySelector('#feedbackModal textarea').value;
+  const reasons = selectedReasons.length ? selectedReasons.join('、') : '未选择';
+  hideFeedback();
+  showToast('我们会优化你的推荐');
+  // Remove song from list with animation
+  setTimeout(() => {
+    const el = document.getElementById('song'+currentSongIdx);
+    if (el) {
+      el.style.transition = 'all 0.3s';
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-100%)';
+      el.style.maxHeight = '0';
+      el.style.padding = '0';
+      el.style.margin = '0';
+      el.style.overflow = 'hidden';
+    }
+  }, 300);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// Init
+buildList();
+</script>
+
+</body>
+</html>

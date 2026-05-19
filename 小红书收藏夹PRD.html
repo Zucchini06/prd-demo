@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书「收藏夹」功能体验优化 — PRD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --primary: #FF2442;
+  --primary-light: #FFF0F2;
+  --primary-dark: #D91A33;
+  --bg: #f4f5f7;
+  --card: #fff;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-light: #aeaeb2;
+  --border: #e5e5ea;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 12px;
+  --sidebar-bg: #1d1d1f;
+  --sidebar-w: 240px;
+}
+
+body {
+  font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  display: flex;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  position: fixed; top: 0; left: 0;
+  width: var(--sidebar-w); height: 100vh;
+  background: var(--sidebar-bg);
+  color: #fff;
+  z-index: 100;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 28px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.sidebar-header .logo {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.sidebar-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sidebar-header .meta {
+  font-size: 11px;
+  opacity: 0.45;
+  margin-top: 4px;
+}
+
+.sidebar-nav {
+  padding: 12px 10px;
+  flex: 1;
+}
+
+.sidebar-nav a {
+  display: block;
+  padding: 8px 12px;
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  margin-bottom: 1px;
+}
+
+.sidebar-nav a:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+}
+
+.sidebar-nav a.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.sidebar-nav a .sn-num {
+  display: inline-block;
+  width: 18px;
+  font-weight: 500;
+  opacity: 0.5;
+  font-size: 11px;
+}
+
+.sidebar-nav a.active .sn-num { opacity: 0.8; }
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: #1d1d1f;
+  padding: 64px 64px 48px;
+  color: #fff;
+}
+
+.hero .tag {
+  display: inline-block;
+  background: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.hero .desc {
+  font-size: 15px;
+  opacity: 0.6;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.hero .row {
+  display: flex;
+  gap: 24px;
+  margin-top: 18px;
+  font-size: 12px;
+  opacity: 0.4;
+}
+
+/* ===== CONTENT ===== */
+.content {
+  max-width: 880px;
+  padding: 40px 64px 80px;
+}
+
+.section {
+  margin-bottom: 52px;
+  scroll-margin-top: 16px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--primary);
+}
+
+.section-head .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.section-head h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.section-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  padding-left: 38px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card p, .card li {
+  font-size: 13.5px;
+  color: #444;
+  line-height: 1.8;
+}
+
+.card ul { padding-left: 18px; }
+.card li { margin-bottom: 3px; }
+
+/* ===== COMPETITOR TABLE ===== */
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.comp-table th {
+  background: #1d1d1f;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+}
+
+.comp-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: #444;
+}
+
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: #f9f9f9; }
+
+/* ===== INSIGHT BOX ===== */
+.insight-box {
+  background: #f8f9fa;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 16px 20px;
+  margin-top: 14px;
+}
+
+.insight-box .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.insight-box p {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+}
+
+/* ===== PERSONA ===== */
+.persona-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 14px;
+}
+
+.persona {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px 16px 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.persona .ptag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.persona h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.persona .stat {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.persona .stat span {
+  font-size: 11px;
+  background: #f4f5f7;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #666;
+}
+
+.persona p {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+}
+
+.persona .quote {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== SCENARIO TABLE ===== */
+.scenario-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.scenario-table th {
+  background: #1d1d1f;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11.5px;
+}
+
+.scenario-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: #444;
+  vertical-align: top;
+}
+
+.scenario-table tr:last-child td { border-bottom: none; }
+
+/* ===== STRATEGY BOX ===== */
+.strategy-hero {
+  background: linear-gradient(135deg, var(--primary-light), #fff);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.strategy-hero .big {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 6px;
+  margin-bottom: 6px;
+}
+
+.strategy-hero p {
+  font-size: 13px;
+  color: #555;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.strategy-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 0;
+  flex-wrap: wrap;
+}
+
+.strategy-flow .sf-step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 12px;
+  box-shadow: var(--shadow);
+  min-width: 72px;
+}
+
+.strategy-flow .sf-arrow {
+  font-size: 18px;
+  color: #ccc;
+}
+
+.strategy-flow .sf-highlight {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.strategy-flow .sf-label {
+  display: block;
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* ===== FEATURE ===== */
+.feature {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.feature-head {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.feature-head:hover { background: #fafafa; }
+
+.feature-head .f-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.feature:nth-child(1) .f-icon { background: var(--primary-light); }
+.feature:nth-child(2) .f-icon { background: #E8F4FD; }
+.feature:nth-child(3) .f-icon { background: #F0E8FF; }
+
+.feature-head h3 {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.feature-head .arrow {
+  font-size: 11px;
+  color: var(--text-light);
+  transition: transform 0.25s;
+}
+
+.feature.open .arrow { transform: rotate(180deg); }
+
+.feature-body {
+  padding: 0 24px 6px;
+  display: none;
+}
+
+.feature.open .feature-body { display: block; }
+
+.feature-body .fb-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.feature-body p, .feature-body li {
+  font-size: 13.5px;
+  color: #444;
+  line-height: 1.8;
+}
+
+.feature-body ul { padding-left: 18px; }
+.feature-body li { margin-bottom: 2px; }
+
+/* ===== METRICS TABLE ===== */
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.metrics-table th {
+  background: #1d1d1f;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+}
+
+.metrics-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: #444;
+}
+
+.metrics-table tr:last-child td { border-bottom: none; }
+.metrics-table tr:hover td { background: #fafafa; }
+.metrics-table .highlight { font-weight: 600; color: var(--primary); }
+
+/* ===== PROTOTYPE ===== */
+.proto-section {
+  background: linear-gradient(145deg, #1a1a1e, #121214);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+}
+
+.proto-head {
+  padding: 22px 28px 18px;
+  color: #fff;
+}
+
+.proto-head h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.proto-head p {
+  font-size: 12px;
+  opacity: 0.4;
+  margin-top: 2px;
+}
+
+.proto-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 28px 14px;
+}
+
+.proto-tabs button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+
+.proto-tabs button:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.15); }
+.proto-tabs button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.proto-body {
+  display: flex;
+  justify-content: center;
+  padding: 12px 28px 24px;
+}
+
+/* ===== PHONE FRAME ===== */
+.phone {
+  width: 300px;
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Notch */
+.phone-notch {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 22px;
+  background: #1a1a1e;
+  border-radius: 0 0 14px 14px;
+  z-index: 50;
+}
+
+.phone-notch::after {
+  content: '';
+  position: absolute;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px;
+  background: #2a2a2e;
+  border-radius: 50%;
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 22px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1d1d1f;
+  background: #fff;
+  position: relative;
+  z-index: 40;
+}
+
+.status-bar .time { font-weight: 700; font-size: 12px; }
+.status-bar .icons { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #555; }
+.status-bar .icons .signal { display: flex; gap: 1px; align-items: center; }
+.status-bar .icons .signal span { display: block; width: 3px; border-radius: 1px; background: currentColor; }
+.status-bar .icons .signal span:nth-child(1) { height: 6px; }
+.status-bar .icons .signal span:nth-child(2) { height: 8px; }
+.status-bar .icons .signal span:nth-child(3) { height: 10px; }
+.status-bar .icons .signal span:nth-child(4) { height: 12px; }
+.status-bar .battery { display: flex; align-items: center; gap: 3px; }
+.status-bar .battery .b-icon { width: 18px; height: 8px; border: 1px solid #555; border-radius: 2px; padding: 1px; position: relative; }
+.status-bar .battery .b-icon::after { content: ''; position: absolute; right: -3px; top: 2px; width: 2px; height: 4px; background: #555; border-radius: 0 1px 1px 0; }
+.status-bar .battery .b-icon .fill { height: 100%; width: 75%; background: #34C759; border-radius: 1px; }
+
+/* Viewport for slide transitions */
+.phone-viewport {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 520px;
+  background: #fff;
+}
+
+.phone-track {
+  display: flex;
+  width: 400%;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.phone-track.track-0 { transform: translateX(0); }
+.phone-track.track-1 { transform: translateX(-25%); }
+.phone-track.track-2 { transform: translateX(-50%); }
+.phone-track.track-3 { transform: translateX(-75%); }
+
+.pscreen {
+  width: 25%;
+  flex-shrink: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== SCREEN: NAV BAR ===== */
+.scr-nav {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.scr-nav .back-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #444;
+  border-radius: 50%;
+  transition: background 0.15s;
+  font-size: 18px;
+}
+
+.scr-nav .back-btn:hover { background: #f4f5f7; }
+.scr-nav .scr-title { flex: 1; font-size: 15px; font-weight: 600; text-align: center; color: #1d1d1f; }
+.scr-nav .scr-action {
+  font-size: 12px; color: var(--primary); font-weight: 600;
+  padding: 6px 8px; cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.scr-nav .scr-action:hover { background: var(--primary-light); }
+.scr-nav .scr-menu {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #444;
+  border-radius: 50%;
+  transition: background 0.15s;
+  font-size: 18px;
+}
+.scr-nav .scr-menu:hover { background: #f4f5f7; }
+
+/* ===== BANNER ===== */
+.banner-card {
+  margin: 4px 14px 10px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.banner-card:hover { transform: scale(1.01); }
+
+.banner-card .b-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 2px;
+  position: relative; z-index: 2;
+}
+
+.banner-card .b-sub {
+  font-size: 11px; opacity: 0.8;
+  position: relative; z-index: 2;
+}
+
+.banner-card .b-arrow {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 18px; opacity: 0.6; z-index: 2;
+}
+
+/* Gradient banner variants */
+.banner-red { background: linear-gradient(135deg, #FF2442, #D91A33); color: #fff; }
+.banner-purple { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+
+/* ===== SCREEN CONTENT ===== */
+.scr-content {
+  padding: 0 16px 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.scr-label {
+  font-size: 11px; font-weight: 600; color: #8e8e93;
+  margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
+  letter-spacing: 0.3px;
+}
+
+.scr-label .more {
+  font-size: 11px; color: var(--primary); cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.scr-label .more:hover { opacity: 0.7; }
+
+/* ===== TAG PILLS ===== */
+.tag-row {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+}
+
+.tag-p {
+  font-size: 11px; padding: 4px 12px; border-radius: 16px;
+  cursor: pointer; transition: all 0.15s; user-select: none;
+  letter-spacing: 0.2px;
+}
+
+.tag-p.primary { background: var(--primary); color: #fff; }
+.tag-p.sec { background: #f2f2f7; color: #6e6e73; }
+.tag-p.sec:hover { background: #e8e8ed; }
+
+.tag-p .dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  margin-right: 4px; vertical-align: middle;
+}
+
+/* ===== FEED ITEM ===== */
+.feed-i {
+  display: flex; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid #f2f2f7; cursor: pointer;
+  align-items: flex-start;
+  transition: opacity 0.15s;
+}
+
+.feed-i:last-child { border-bottom: none; }
+.feed-i:hover { opacity: 0.85; }
+
+.feed-i .thumb {
+  width: 52px; height: 52px; border-radius: 8px;
+  flex-shrink: 0; overflow: hidden;
+  position: relative;
+}
+
+.feed-i .thumb .overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.15));
+}
+
+.feed-i .info { flex: 1; min-width: 0; }
+
+.feed-i .info .i-title {
+  font-size: 12.5px; font-weight: 600; color: #1d1d1f;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 1px; line-height: 1.4;
+}
+
+.feed-i .info .i-meta {
+  font-size: 10.5px; color: #aeaeb2;
+}
+
+.feed-i .info .i-tags {
+  display: flex; gap: 4px; margin-top: 4px;
+}
+
+.feed-i .info .i-tags span {
+  font-size: 9px; padding: 1px 7px; border-radius: 8px;
+  background: #f2f2f7; color: #8e8e93;
+}
+
+/* ===== TAB BAR ===== */
+.tab-bar {
+  display: flex; border-top: 1px solid #f0f0f0;
+  padding: 4px 6px 10px; background: rgba(255,255,255,0.98);
+  flex-shrink: 0;
+}
+
+.tab-bar .tab-item {
+  flex: 1; text-align: center;
+  cursor: pointer; padding: 2px 0;
+  color: #8e8e93; transition: color 0.15s;
+}
+
+.tab-bar .tab-item:hover { color: #555; }
+.tab-bar .tab-item.active { color: var(--primary); }
+
+.tab-bar .tab-item svg {
+  display: block; margin: 0 auto 1px;
+  width: 20px; height: 20px;
+}
+
+.tab-bar .tab-item .tl {
+  font-size: 9px; letter-spacing: 0.2px;
+}
+
+/* ===== TAG LIST (Screen 1) ===== */
+.tag-list { padding: 0; }
+.tag-list .tl-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid #f2f2f7;
+  cursor: pointer;
+}
+
+.tag-list .tl-item:last-child { border-bottom: none; }
+
+.tag-list .tl-item .tl-dot {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 14px; font-weight: 600; color: #fff;
+}
+
+.tag-list .tl-item .tl-info { flex: 1; }
+.tag-list .tl-item .tl-info .tl-name { font-size: 13px; font-weight: 600; color: #1d1d1f; }
+.tag-list .tl-item .tl-info .tl-count { font-size: 11px; color: #aeaeb2; }
+.tag-list .tl-item .tl-arrow { color: #ccc; font-size: 14px; }
+
+.tag-uncat {
+  background: #fafafa; border-radius: 10px; padding: 12px 14px;
+  margin-top: 6px; display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+}
+
+.tag-uncat .uc-icon {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: #f0f0f0; display: flex; align-items: center; justify-content: center;
+  color: #999; font-size: 12px; flex-shrink: 0;
+}
+
+.tag-uncat .uc-info { flex: 1; }
+.tag-uncat .uc-info .uc-title { font-size: 12px; font-weight: 600; color: #1d1d1f; }
+.tag-uncat .uc-info .uc-sub { font-size: 11px; color: #aeaeb2; }
+.tag-uncat .uc-btn { font-size: 11px; color: var(--primary); font-weight: 600; }
+
+/* ===== WEEKLY CARD ===== */
+.w-card {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 14px; padding: 16px 18px; color: #fff;
+  margin-bottom: 14px;
+}
+
+.w-card .wc-hd {
+  display: flex; justify-content: space-between;
+  font-size: 10.5px; opacity: 0.8; margin-bottom: 8px;
+}
+
+.w-card .wc-stats { display: flex; gap: 24px; }
+.w-card .wc-stats .s-num { font-size: 26px; font-weight: 700; line-height: 1.2; }
+.w-card .wc-stats .s-lbl { font-size: 10px; opacity: 0.75; }
+.w-card .wc-progress { height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.w-card .wc-progress .p-fill { height: 100%; background: #fff; border-radius: 2px; width: 65%; }
+
+/* ===== IMMERSIVE ===== */
+.imm-mode {
+  background: #000; flex: 1;
+  display: flex; flex-direction: column; position: relative;
+  min-height: 440px;
+}
+
+.imm-mode .imm-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 44px 16px 10px; z-index: 10;
+}
+
+.imm-mode .imm-top .imm-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 16px;
+  transition: background 0.2s;
+}
+.imm-mode .imm-top .imm-close:hover { background: rgba(255,255,255,0.2); }
+
+.imm-mode .imm-top .imm-progress {
+  font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;
+  background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.imm-mode .imm-card {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px; color: #fff; text-align: center;
+}
+
+.imm-mode .imm-card .ic-visual {
+  width: 80px; height: 80px; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; font-size: 32px; font-weight: 700;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.imm-mode .imm-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.imm-mode .imm-card .ic-meta { font-size: 12px; opacity: 0.5; }
+
+.imm-mode .imm-bottom {
+  background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+  border-radius: 16px 16px 0 0; padding: 14px 16px 18px;
+  position: relative; z-index: 5;
+}
+
+.imm-mode .imm-bottom .imm-hints {
+  display: flex; gap: 6px; justify-content: center;
+}
+
+.imm-mode .imm-bottom .imm-hints span {
+  font-size: 10px; padding: 4px 12px; border-radius: 10px;
+  background: #f2f2f7; color: #8e8e93;
+}
+
+.imm-mode .imm-bottom .imm-hints .active-hint {
+  background: var(--primary); color: #fff;
+}
+
+.imm-mode .imm-bottom .imm-nav {
+  display: flex; justify-content: center; gap: 28px;
+  margin-top: 10px;
+}
+
+.imm-mode .imm-bottom .imm-nav .nav-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #f2f2f7; display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer; color: #666; font-size: 18px;
+  transition: all 0.15s;
+}
+
+.imm-mode .imm-bottom .imm-nav .nav-btn:hover { background: #e8e8ee; }
+.imm-mode .imm-bottom .imm-nav .nav-btn:active { transform: scale(0.92); }
+.imm-mode .imm-bottom .imm-nav .nav-btn.disabled { opacity: 0.3; cursor: default; }
+
+.imm-mode .imm-bottom .imm-hint-text {
+  text-align: center; font-size: 10px; color: #aeaeb2;
+  margin-top: 8px;
+}
+
+/* ===== HOME INDICATOR ===== */
+.home-indicator {
+  width: 120px; height: 5px;
+  background: #e0e0e0; border-radius: 3px;
+  margin: 0 auto 8px;
+}
+
+/* ===== HIDDEN HELPER ===== */
+.hidden { display: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .hero { padding: 36px 24px; }
+  .content { padding: 24px 20px; }
+  .persona-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 22px; }
+  .hero { padding: 28px 16px; }
+  .content { padding: 20px 14px; }
+  .phone { width: 100%; }
+  .metrics-table { font-size: 11.5px; }
+  .metrics-table th,.metrics-table td { padding: 7px 8px; }
+  .strategy-flow { flex-direction: column; }
+  .strategy-flow .sf-arrow { transform: rotate(90deg); }
+  .section-head h2 { font-size: 16px; }
+  .proto-tabs { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">小红书 · PRD</div>
+    <h1>收藏夹功能<br>体验优化</h1>
+    <div class="meta">v1.0 · 2026.05 · 赵知涵</div>
+  </div>
+  <div class="sidebar-nav">
+    <a href="#s1" class="active"><span class="sn-num">01</span>项目概述</a>
+    <a href="#s2"><span class="sn-num">02</span>竞品分析</a>
+    <a href="#s3"><span class="sn-num">03</span>用户研究</a>
+    <a href="#s4"><span class="sn-num">04</span>产品策略</a>
+    <a href="#s5"><span class="sn-num">05</span>功能需求</a>
+    <a href="#s6"><span class="sn-num">06</span>数据指标</a>
+    <a href="#s7"><span class="sn-num">07</span>交互原型</a>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="tag">产品需求文档</div>
+    <h1>小红书「收藏夹」功能体验优化</h1>
+    <p class="desc">解决"收藏即吃灰"核心痛点 —— 以「轻管理、重回顾」为策略，通过智能标签归类、收藏周报推送、沉浸式回顾模式三项功能，提升收藏内容利用率与用户回访意愿。</p>
+    <div class="row">
+      <span>📅 2026.05 ｜ 独立完成</span>
+      <span>📱 iOS / Android</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== 01 项目概述 ===== -->
+    <section class="section" id="s1">
+      <div class="section-head">
+        <span class="num">01</span>
+        <h2>项目概述</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📌 背景</div>
+        <p>小红书用户日均产生大量收藏行为，但绝大多数收藏内容在保存后便不再被打开，形成"收藏即吃灰"现象。大量内容沉淀在收藏夹中，缺乏有效的组织管理和二次触达机制，收藏功能的用户价值远未被释放。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎯 目标</div>
+        <ul>
+          <li>收藏 7 日回访率提升 <strong>30%+</strong>（核心指标）</li>
+          <li>收藏二次消费时长提升至 <strong>15s+</strong></li>
+          <li>降低用户收藏管理负担，提升收藏内容利用率</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📐 范围</div>
+        <ul>
+          <li><strong>覆盖端：</strong>iOS / Android 移动端</li>
+          <li><strong>涉及模块：</strong>收藏夹首页、收藏流程、消息推送、个人页</li>
+          <li><strong>不涉及：</strong>推荐算法改造、首页信息流</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== 02 竞品分析 ===== -->
+    <section class="section" id="s2">
+      <div class="section-head">
+        <span class="num">02</span>
+        <h2>市场与竞品分析</h2>
+      </div>
+      <p class="section-sub">选取抖音、Pinterest、得到三个维度不同的产品进行对标</p>
+
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th>小红书（现状）</th>
+            <th>抖音</th>
+            <th>Pinterest</th>
+            <th>得到</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>收藏分类方式</strong></td>
+            <td>手动建收藏夹</td>
+            <td>无分类，全部平铺</td>
+            <td>画板（Board）体系</td>
+            <td>文件夹 + 标签</td>
+          </tr>
+          <tr>
+            <td><strong>智能归类</strong></td>
+            <td>❌ 无</td>
+            <td>❌ 无</td>
+            <td>✅ AI 自动分类建议</td>
+            <td>✅ 智能标签</td>
+          </tr>
+          <tr>
+            <td><strong>二次触达机制</strong></td>
+            <td>❌ 无</td>
+            <td>⚠️ 收藏列表入口浅</td>
+            <td>✅ 每周精选推送邮件</td>
+            <td>✅ 学习提醒</td>
+          </tr>
+          <tr>
+            <td><strong>回顾体验</strong></td>
+            <td>列表平铺</td>
+            <td>列表平铺</td>
+            <td>瀑布流 + 相似推荐</td>
+            <td>知识卡片回顾</td>
+          </tr>
+          <tr>
+            <td><strong>可借鉴点</strong></td>
+            <td>-</td>
+            <td>收藏即订阅的轻量感</td>
+            <td>视觉驱动回顾、每周推送</td>
+            <td>标签管理体系</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="insight-box">
+        <div class="label">核心洞察</div>
+        <p>抖音验证了"轻分类"路线的可行性——在用户量极大的场景下，弱化管理反而提升了收藏使用率。Pinterest 的每周精选邮件是"重回顾"方向最成熟的方案，已被验证可显著提升回访率。得到的标签体系可轻量化借鉴，但过于重度的文件夹管理不适合小红书用户习惯。</p>
+      </div>
+    </section>
+
+    <!-- ===== 03 用户研究 ===== -->
+    <section class="section" id="s3">
+      <div class="section-head">
+        <span class="num">03</span>
+        <h2>用户研究</h2>
+      </div>
+      <p class="section-sub">通过用户访谈与行为数据分析，归纳出三类典型用户</p>
+
+      <div class="persona-grid">
+        <div class="persona">
+          <div class="ptag">TYPE A · 重度收藏党</div>
+          <h4>收藏即弃</h4>
+          <div class="stat">
+            <span>📦 500+ 收藏</span>
+            <span>📅 每日 5-10 条</span>
+            <span>🏷 从不分类</span>
+          </div>
+          <p>每天收藏大量内容，但从不整理。想回顾时需要翻找很久，越积越多就彻底放弃了整理的念头。收藏夹对他来说就是"内容的黑洞"。</p>
+          <div class="quote">"我也知道该整理，但每次收藏完就忘了，越堆越多就更不想动了"</div>
+        </div>
+
+        <div class="persona">
+          <div class="ptag">TYPE B · 轻度假日党</div>
+          <h4>收藏即已读</h4>
+          <div class="stat">
+            <span>📦 50- 收藏</span>
+            <span>📅 月均 15 条</span>
+            <span>🏷 几乎不回看</span>
+          </div>
+          <p>收藏行为多是"先存着再说"，很少主动回去翻看。收藏对他来说是心理安慰而非实际需求，缺乏回访的动机和触发点。</p>
+          <div class="quote">"收藏就等于我看了，之后不会专门点进去翻"</div>
+        </div>
+
+        <div class="persona">
+          <div class="ptag">TYPE C · 整理控</div>
+          <h4>挣扎的分类者</h4>
+          <div class="stat">
+            <span>📦 200+ 收藏</span>
+            <span>📅 每周整理</span>
+            <span>🏷 坚持但吃力</span>
+          </div>
+          <p>有强烈的整理习惯，每条收藏都会认真分类。但手动整理耗时费力，经常拖一两周就放弃一次，然后陷入"整理-放弃-堆积-再整理"的循环。</p>
+          <div class="quote">"整理太累了，有时候拖两周就放弃了，然后看着一堆未分类的更难受"</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <table class="scenario-table">
+          <thead>
+            <tr>
+              <th style="width:18%;">用户类型</th>
+              <th style="width:38%;">痛点场景</th>
+              <th style="width:44%;">需求描述</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>重度收藏党</strong></td>
+              <td>旅行前想起收藏过攻略，打开收藏夹翻了 5 分钟找不到，最后直接去搜索了</td>
+              <td>系统自动归类，不需要手动整理也能快速找到想要的内容</td>
+            </tr>
+            <tr>
+              <td><strong>轻度假日党</strong></td>
+              <td>周末无聊想看看收藏了啥，点进去发现全是几个月前的，已经没兴趣了</td>
+              <td>系统在合适的时候主动提醒，创造"再看一眼"的契机</td>
+            </tr>
+            <tr>
+              <td><strong>整理控</strong></td>
+              <td>每周日晚上花 30 分钟整理收藏，终于坚持了 3 周后放弃了</td>
+              <td>系统做大部分归类工作，用户只需微调确认</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== 04 产品策略 ===== -->
+    <section class="section" id="s4">
+      <div class="section-head">
+        <span class="num">04</span>
+        <h2>产品策略</h2>
+      </div>
+
+      <div class="strategy-hero">
+        <div class="big">轻管理 · 重回顾</div>
+        <p>降低用户在收藏时的认知负荷和操作成本，将优化重心从"让用户更好地管理收藏"转向"让收藏更好地服务用户"——系统主动承担组织工作，创造更多回顾契机。</p>
+      </div>
+
+      <div class="strategy-flow">
+        <div class="sf-step">
+          收藏内容
+          <span class="sf-label">触发</span>
+        </div>
+        <span class="sf-arrow">→</span>
+        <div class="sf-step sf-highlight">
+          AI 自动标签
+          <span class="sf-label">轻管理</span>
+        </div>
+        <span class="sf-arrow">→</span>
+        <div class="sf-step">
+          标签聚合展示
+          <span class="sf-label">组织呈现</span>
+        </div>
+        <span class="sf-arrow">→</span>
+        <div class="sf-step sf-highlight">
+          周报推送触达
+          <span class="sf-label">重回顾</span>
+        </div>
+        <span class="sf-arrow">→</span>
+        <div class="sf-step sf-highlight">
+          沉浸式回顾
+          <span class="sf-label">重回顾</span>
+        </div>
+        <span class="sf-arrow">→</span>
+        <div class="sf-step">
+          提升内容利用率
+          <span class="sf-label">目标</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;">
+        <div class="card" style="text-align:center;">
+          <p style="font-size:24px;margin-bottom:4px;">🏷️</p>
+          <p style="font-weight:600;font-size:13px;">智能标签归类</p>
+          <p style="font-size:12px;color:#888;margin-top:2px;">AI 自动识别内容主题并分配标签，替代现有手动选择收藏夹流程</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:24px;margin-bottom:4px;">📬</p>
+          <p style="font-weight:600;font-size:13px;">收藏周报推送</p>
+          <p style="font-size:12px;color:#888;margin-top:2px;">每周推送收藏回顾报告，用轻量化信息流引导用户回到收藏</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:24px;margin-bottom:4px;">🖼️</p>
+          <p style="font-weight:600;font-size:13px;">沉浸式回顾模式</p>
+          <p style="font-size:12px;color:#888;margin-top:2px;">全屏卡片式回顾，操作体验与刷首页一致，降低回访心理门槛</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 05 功能需求 ===== -->
+    <section class="section" id="s5">
+      <div class="section-head">
+        <span class="num">05</span>
+        <h2>功能需求详解</h2>
+      </div>
+
+      <!-- Feature 1 -->
+      <div class="feature open">
+        <div class="feature-head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="f-icon">🏷️</span>
+          <h3>功能一：智能标签归类</h3>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="feature-body">
+
+          <div class="fb-label">📋 功能概述</div>
+          <p>用户收藏笔记时，系统基于 NLP 内容识别实时分配标签，替代现有手动创建/选择收藏夹的流程。用标签体系彻底替换收藏夹体系。</p>
+
+          <div class="fb-label">⚙️ 业务逻辑</div>
+          <ul>
+            <li>用户点击收藏按钮 → 系统实时识别内容主题 → 分配 1-2 个标签 → 收藏成功 Toast 中直接展示标签，右侧提供"编辑"入口</li>
+            <li>识别置信度 ≥ 60% 时自动分配标签；&lt; 60% 时标记为"未分类"，Toast 提示"暂未识别到内容类型，点击手动选择"</li>
+            <li>收藏夹首页按标签 <strong>类目折叠分组</strong> 展示（如"生活"类目下含穿搭、美食、家居标签），默认展开最近使用的前 2 个类目，其余折叠</li>
+            <li>标签管理页支持合并、重命名、删除标签；单标签下内容超过 200 条时触发系统建议细分</li>
+          </ul>
+
+          <div class="fb-label">🖱️ 交互细节</div>
+          <ul>
+            <li>收藏 Toast：底部弹出，文案"已收藏到 [标签名]"，右侧"编辑标签"按钮</li>
+            <li>收藏夹首页顶部为标签类目折叠区，下方为内容列表（按当前选中标签筛选）</li>
+            <li>支持"全部内容"视图（按时间倒叙）和"按标签浏览"视图</li>
+          </ul>
+
+          <div class="fb-label">⚠️ 异常流程</div>
+          <ul>
+            <li>内容已被原作者删除 → 标签保留，内容显示"已失效"</li>
+            <li>网络异常导致识别失败 → 暂标为"未分类"，后台重试识别</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature">
+        <div class="feature-head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="f-icon">📬</span>
+          <h3>功能二：收藏周报推送</h3>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="feature-body">
+
+          <div class="fb-label">📋 功能概述</div>
+          <p>定期向用户推送收藏内容回顾报告，展示本周收藏概览、精选内容和待回顾提醒，用轻量化的信息流方式引导用户重新回到收藏内容。</p>
+
+          <div class="fb-label">⚙️ 业务逻辑</div>
+          <ul>
+            <li>默认推送时间：每周日 20:00</li>
+            <li>支持用户自选推送频率：每 3 天 / 每周（默认）/ 每两周</li>
+            <li>点击推送通知 → 进入 H5 收藏周报页面</li>
+          </ul>
+
+          <div class="fb-label">📄 周报内容结构</div>
+          <ul>
+            <li><strong>本周收藏概览：</strong>本周收藏数、已回顾数、累计总收藏数</li>
+            <li><strong>本周精选：</strong>本周收藏中热度 / 互动最高的 3 条内容</li>
+            <li><strong>待回顾提醒：</strong>展示 N 天前收藏但尚未回看的内容，可标记"稍后回顾"</li>
+          </ul>
+
+          <div class="fb-label">⚙️ 设置项</div>
+          <ul>
+            <li>收藏夹设置页新增"收藏周报"开关</li>
+            <li>支持频率选择（每 3 天 / 每周 / 每两周）</li>
+            <li>推送通知可单独开关</li>
+            <li>推送底部提供"管理推送偏好"入口</li>
+          </ul>
+
+          <div class="fb-label">⚠️ 异常流程</div>
+          <ul>
+            <li>本周未收藏 → 不推送周报，改为推送"猜你喜欢"（基于历史收藏推荐）</li>
+            <li>连续 4 周未点击周报 → 自动降低推送优先级或暂停推送</li>
+            <li>用户关闭推送通知 → 周报仅在 App 内消息中心展示</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature">
+        <div class="feature-head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="f-icon">🖼️</span>
+          <h3>功能三：沉浸式回顾模式</h3>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="feature-body">
+
+          <div class="fb-label">📋 功能概述</div>
+          <p>在收藏夹中新增"回顾"独立 Tab，进入后以全屏沉浸式卡片流展示收藏内容，用户上下滑动浏览，操作体验与首页刷笔记一致，降低回访心理门槛。</p>
+
+          <div class="fb-label">⚙️ 业务逻辑</div>
+          <ul>
+            <li>入口：收藏夹底部 Tab 栏新增"回顾"独立 tab</li>
+            <li>默认排序：<strong>随机顺序</strong>（制造惊喜感），支持切换为"按标签筛选后随机"</li>
+            <li>退出后记忆浏览位置，下次进入从中断处继续</li>
+          </ul>
+
+          <div class="fb-label">🖱️ 手势操作</div>
+          <ul>
+            <li><strong>上滑 / 点击：</strong>下一条</li>
+            <li><strong>下滑：</strong>上一条</li>
+            <li><strong>左滑：</strong>移除（取消收藏）</li>
+            <li><strong>右滑：</strong>标记"已回顾"</li>
+            <li><strong>点击内容区：</strong>跳转查看原始笔记详情</li>
+          </ul>
+
+          <div class="fb-label">🖱️ 交互细节</div>
+          <ul>
+            <li>进入回顾模式时有平滑动效过渡</li>
+            <li>全屏深色背景，只展示当前卡片内容</li>
+            <li>顶部显示进度（如 3/27）、退出按钮</li>
+            <li>底部有轻量手势操作提示</li>
+          </ul>
+
+          <div class="fb-label">⚠️ 异常流程</div>
+          <ul>
+            <li>内容已被原作者删除 → 占位图 + "内容已消失"提示，自动跳过</li>
+            <li>收藏内容不足 5 条 → 展示"快去收藏你喜欢的内容吧"空状态引导</li>
+            <li>回顾中网络中断 → 已加载的缓存内容继续可滑动，加载失败项标注</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===== 06 数据指标 ===== -->
+    <section class="section" id="s6">
+      <div class="section-head">
+        <span class="num">06</span>
+        <h2>数据指标体系</h2>
+      </div>
+      <p class="section-sub">核心指标 + 过程指标，覆盖结果度量与过程监控</p>
+
+      <table class="metrics-table">
+        <thead>
+          <tr>
+            <th>指标</th>
+            <th>类型</th>
+            <th>定义</th>
+            <th>当前值</th>
+            <th>目标值</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>收藏 7 日回访率</strong></td>
+            <td>核心</td>
+            <td>收藏后 7 天内再次访问该收藏的用户占比</td>
+            <td>~20%</td>
+            <td class="highlight">&gt;26%（+30%）</td>
+          </tr>
+          <tr>
+            <td><strong>收藏二次消费时长</strong></td>
+            <td>核心</td>
+            <td>每次回访收藏内容的平均浏览时长</td>
+            <td>~8s</td>
+            <td class="highlight">&gt;15s</td>
+          </tr>
+          <tr>
+            <td><strong>周报点击率</strong></td>
+            <td>过程</td>
+            <td>收到周报推送后点击进入的用户占比</td>
+            <td>-</td>
+            <td class="highlight">&gt;15%</td>
+          </tr>
+          <tr>
+            <td><strong>回顾模式完成率</strong></td>
+            <td>过程</td>
+            <td>进入回顾后浏览 ≥ 5 条的用户占比</td>
+            <td>-</td>
+            <td class="highlight">&gt;60%</td>
+          </tr>
+          <tr>
+            <td><strong>标签覆盖率</strong></td>
+            <td>过程</td>
+            <td>已自动分类内容占总收藏数比例</td>
+            <td>-</td>
+            <td class="highlight">&gt;85%</td>
+          </tr>
+          <tr>
+            <td><strong>收藏功能 NPS</strong></td>
+            <td>体验</td>
+            <td>收藏功能净推荐值</td>
+            <td>基线待测</td>
+            <td class="highlight">+10pp</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== 07 交互原型 ===== -->
+    <section class="section" id="s7">
+      <div class="section-head">
+        <span class="num">07</span>
+        <h2>交互原型</h2>
+      </div>
+      <p class="section-sub">可交互高保真原型 · 点击界面元素体验真实跳转</p>
+
+      <div class="proto-section">
+        <div class="proto-head">
+          <h3>高保真交互原型</h3>
+          <p>移动端 · 小红书收藏夹体验优化</p>
+        </div>
+        <div class="proto-tabs" id="protoTabs">
+          <button class="active" data-p="0">收藏夹首页</button>
+          <button data-p="1">标签管理</button>
+          <button data-p="2">收藏周报</button>
+          <button data-p="3">沉浸回顾</button>
+        </div>
+        <div class="proto-body">
+
+          <div class="phone">
+
+            <!-- Notch -->
+            <div class="phone-notch"></div>
+
+            <!-- Status bar -->
+            <div class="status-bar">
+              <span class="time">9:41</span>
+              <span class="icons">
+                <span class="signal">
+                  <span></span><span></span><span></span><span></span>
+                </span>
+                <span class="battery">
+                  <span class="b-icon"><span class="fill"></span></span>
+                </span>
+              </span>
+            </div>
+
+            <!-- Screen viewport with slide track -->
+            <div class="phone-viewport">
+              <div class="phone-track track-0" id="phoneTrack">
+
+                <!-- ===== SCREEN 0: 收藏夹首页 ===== -->
+                <div class="pscreen" data-s="0">
+                  <div class="scr-nav">
+                    <span class="back-btn">&#8592;</span>
+                    <span class="scr-title">我的收藏</span>
+                    <span class="scr-menu">&#183;&#183;&#183;</span>
+                  </div>
+
+                  <!-- Banner -->
+                  <div class="banner-card banner-red" onclick="goToScreen(3)">
+                    <div class="b-title">回顾你的收藏</div>
+                    <div class="b-sub">今天有 12 条内容等你来看</div>
+                    <span class="b-arrow">&#8594;</span>
+                  </div>
+
+                  <div class="scr-content">
+                    <div class="scr-label">
+                      <span>标签分类</span>
+                      <span class="more" onclick="goToScreen(1)">管理 &rsaquo;</span>
+                    </div>
+
+                    <div class="tag-row">
+                      <span class="tag-p primary">全部</span>
+                      <span class="tag-p sec"><span class="dot" style="background:#FF6B6B;"></span>穿搭</span>
+                      <span class="tag-p sec"><span class="dot" style="background:#FFD93D;"></span>美食</span>
+                      <span class="tag-p sec"><span class="dot" style="background:#11998E;"></span>旅行</span>
+                      <span class="tag-p sec"><span class="dot" style="background:#4FACFE;"></span>学习</span>
+                    </div>
+
+                    <div class="scr-label"><span>全部内容</span><span class="more">筛选 &rsaquo;</span></div>
+
+                    <!-- Feed items with gradient thumbs -->
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#FF6B6B,#FFA07A);">
+                        <div class="overlay"></div>
+                      </div>
+                      <div class="info">
+                        <div class="i-title">春季通勤穿搭合集｜气质又舒服</div>
+                        <div class="i-meta">小七的衣橱 · 3天前收藏</div>
+                        <div class="i-tags"><span style="background:#FFF0F2;color:#FF6B6B;">穿搭</span></div>
+                      </div>
+                    </div>
+
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#FFD93D,#FF6B35);">
+                        <div class="overlay"></div>
+                      </div>
+                      <div class="info">
+                        <div class="i-title">上海 5 家宝藏甜品店合集</div>
+                        <div class="i-meta">吃货小A · 5天前收藏</div>
+                        <div class="i-tags"><span style="background:#FFF8E1;color:#E6A800;">美食</span></div>
+                      </div>
+                    </div>
+
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#11998E,#38EF7D);">
+                        <div class="overlay"></div>
+                      </div>
+                      <div class="info">
+                        <div class="i-title">川西自驾 7 日攻略｜此生必驾</div>
+                        <div class="i-meta">旅行日记 · 1周前收藏</div>
+                        <div class="i-tags"><span style="background:#E8F5E9;color:#2E7D32;">旅行</span></div>
+                      </div>
+                    </div>
+
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#4FACFE,#00F2FE);">
+                        <div class="overlay"></div>
+                      </div>
+                      <div class="info">
+                        <div class="i-title">30 天英语口语提升计划</div>
+                        <div class="i-meta">英语学姐 · 2周前收藏</div>
+                        <div class="i-tags"><span style="background:#E3F2FD;color:#1565C0;">学习</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tab-bar">
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                      <span class="tl">首页</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <span class="tl">发现</span>
+                    </div>
+                    <div class="tab-item active">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      <span class="tl">收藏</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      <span class="tl">消息</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <span class="tl">我的</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ===== SCREEN 1: 标签管理 ===== -->
+                <div class="pscreen" data-s="1">
+                  <div class="scr-nav">
+                    <span class="back-btn" onclick="goToScreen(0)">&#8592;</span>
+                    <span class="scr-title">标签管理</span>
+                    <span class="scr-action">完成</span>
+                  </div>
+
+                  <div class="scr-content">
+                    <div class="scr-label"><span>我的标签</span><span class="more">+ 新建</span></div>
+
+                    <div class="tag-list">
+                      <div class="tl-item">
+                        <div class="tl-dot" style="background:linear-gradient(135deg,#FF6B6B,#FFA07A);">&#9829;</div>
+                        <div class="tl-info">
+                          <div class="tl-name">穿搭</div>
+                          <div class="tl-count">42 条收藏</div>
+                        </div>
+                        <span class="tl-arrow">&rsaquo;</span>
+                      </div>
+
+                      <div class="tl-item">
+                        <div class="tl-dot" style="background:linear-gradient(135deg,#FFD93D,#FF6B35);">&#9733;</div>
+                        <div class="tl-info">
+                          <div class="tl-name">美食</div>
+                          <div class="tl-count">38 条收藏</div>
+                        </div>
+                        <span class="tl-arrow">&rsaquo;</span>
+                      </div>
+
+                      <div class="tl-item">
+                        <div class="tl-dot" style="background:linear-gradient(135deg,#11998E,#38EF7D);">&#9650;</div>
+                        <div class="tl-info">
+                          <div class="tl-name">旅行</div>
+                          <div class="tl-count">27 条收藏</div>
+                        </div>
+                        <span class="tl-arrow">&rsaquo;</span>
+                      </div>
+
+                      <div class="tl-item">
+                        <div class="tl-dot" style="background:linear-gradient(135deg,#4FACFE,#00F2FE);">&#9670;</div>
+                        <div class="tl-info">
+                          <div class="tl-name">学习</div>
+                          <div class="tl-count">21 条收藏</div>
+                        </div>
+                        <span class="tl-arrow">&rsaquo;</span>
+                      </div>
+
+                      <div class="tl-item">
+                        <div class="tl-dot" style="background:linear-gradient(135deg,#E0C3FC,#8EC5FC);">&#9632;</div>
+                        <div class="tl-info">
+                          <div class="tl-name">家居</div>
+                          <div class="tl-count">15 条收藏</div>
+                        </div>
+                        <span class="tl-arrow">&rsaquo;</span>
+                      </div>
+                    </div>
+
+                    <div class="tag-uncat">
+                      <div class="uc-icon">?</div>
+                      <div class="uc-info">
+                        <div class="uc-title">3 条内容待分类</div>
+                        <div class="uc-sub">点击批量归类</div>
+                      </div>
+                      <span class="uc-btn">去归类 &rsaquo;</span>
+                    </div>
+                  </div>
+
+                  <div class="tab-bar">
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                      <span class="tl">首页</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <span class="tl">发现</span>
+                    </div>
+                    <div class="tab-item active">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      <span class="tl">收藏</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      <span class="tl">消息</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <span class="tl">我的</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ===== SCREEN 2: 收藏周报 ===== -->
+                <div class="pscreen" data-s="2">
+                  <div class="scr-nav">
+                    <span class="back-btn" onclick="goToScreen(0)">&#8592;</span>
+                    <span class="scr-title">收藏周报</span>
+                    <span class="scr-menu">&#183;&#183;&#183;</span>
+                  </div>
+
+                  <div class="scr-content">
+                    <div style="text-align:center;padding:4px 0 10px;font-size:11px;color:#aeaeb2;">2026.05.12 - 2026.05.18</div>
+
+                    <div class="w-card">
+                      <div class="wc-hd"><span>本周概览</span><span>第 20 周</span></div>
+                      <div class="wc-stats">
+                        <div><div class="s-num">12</div><div class="s-lbl">本周收藏</div></div>
+                        <div><div class="s-num">8</div><div class="s-lbl">已回顾</div></div>
+                        <div><div class="s-num">4</div><div class="s-lbl">待回顾</div></div>
+                      </div>
+                      <div class="wc-progress"><div class="p-fill"></div></div>
+                    </div>
+
+                    <div class="scr-label"><span>本周精选</span></div>
+
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#FF6B6B,#FFA07A);"><div class="overlay"></div></div>
+                      <div class="info">
+                        <div class="i-title">春季通勤穿搭合集｜气质又舒服</div>
+                        <div class="i-meta">&#9650; 1000+ 人收藏</div>
+                      </div>
+                    </div>
+
+                    <div class="feed-i" onclick="showMsg('查看笔记详情')">
+                      <div class="thumb" style="background:linear-gradient(135deg,#FFD93D,#FF6B35);"><div class="overlay"></div></div>
+                      <div class="info">
+                        <div class="i-title">上海 5 家宝藏甜品店合集</div>
+                        <div class="i-meta">&#9650; 234 人打卡</div>
+                      </div>
+                    </div>
+
+                    <div class="scr-label" style="margin-top:6px;"><span>待回顾</span><span class="more">全部 &rsaquo;</span></div>
+
+                    <div class="feed-i">
+                      <div class="thumb" style="background:linear-gradient(135deg,#11998E,#38EF7D);"><div class="overlay"></div></div>
+                      <div class="info">
+                        <div class="i-title">川西自驾 7 日攻略｜此生必驾</div>
+                        <div class="i-meta">收藏 7 天 · 尚未回看</div>
+                        <div style="font-size:10px;color:var(--primary);margin-top:2px;">&#9679; 稍后回顾</div>
+                      </div>
+                    </div>
+
+                    <div style="text-align:center;margin-top:10px;padding-bottom:4px;">
+                      <span style="font-size:11px;color:var(--primary);cursor:pointer;font-weight:600;letter-spacing:0.3px;" onclick="goToScreen(3)">开始沉浸式回顾 &rsaquo;</span>
+                    </div>
+                  </div>
+
+                  <div class="tab-bar">
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                      <span class="tl">首页</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <span class="tl">发现</span>
+                    </div>
+                    <div class="tab-item active">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      <span class="tl">收藏</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      <span class="tl">消息</span>
+                    </div>
+                    <div class="tab-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <span class="tl">我的</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ===== SCREEN 3: 沉浸回顾 ===== -->
+                <div class="pscreen" data-s="3">
+                  <div class="imm-mode">
+                    <div class="imm-top">
+                      <span class="imm-close" onclick="goToScreen(0)">&#x2715;</span>
+                      <span class="imm-progress">1 / 12</span>
+                    </div>
+
+                    <div class="imm-card" style="background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);">
+                      <div class="ic-visual" style="background:linear-gradient(135deg,#11998E,#38EF7D);">
+                        &#9650;
+                      </div>
+                      <h3>川西自驾 7 日攻略</h3>
+                      <p class="ic-meta">旅行日记 · 收藏于 7 天前</p>
+                    </div>
+
+                    <div class="imm-bottom">
+                      <div class="imm-hints">
+                        <span class="active-hint">&#8593;&#8595; 切换</span>
+                        <span>&#8592; 移除</span>
+                        <span>&#8594; 已回顾</span>
+                      </div>
+                      <div class="imm-nav">
+                        <span class="nav-btn disabled">&#8592;</span>
+                        <span class="nav-btn" onclick="showMsg('切换到下一条内容')">&#8594;</span>
+                      </div>
+                      <div class="imm-hint-text">点击内容区查看原始笔记</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /phone-track -->
+            </div><!-- /phone-viewport -->
+
+            <!-- Home indicator -->
+            <div class="home-indicator"></div>
+
+          </div><!-- /phone -->
+
+        </div><!-- /proto-body -->
+        <div style="text-align:center;padding:8px 0 18px;font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.3px;">
+          &#9679; 点击 banner、标签管理、回顾入口可跳转 &#9679;
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+// ===== PHONE SCREEN NAVIGATION =====
+let currentScreen = 0;
+
+function goToScreen(idx) {
+  if (idx === currentScreen) return;
+  const track = document.getElementById('phoneTrack');
+  track.className = 'phone-track track-' + idx;
+  currentScreen = idx;
+  document.querySelectorAll('#protoTabs button').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+}
+
+document.querySelectorAll('#protoTabs button').forEach(b => {
+  b.addEventListener('click', function() {
+    goToScreen(parseInt(this.dataset.p));
+  });
+});
+
+// ===== SIMPLE TOAST =====
+function showMsg(text) {
+  const t = document.createElement('div');
+  t.textContent = text;
+  t.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);color:#fff;padding:10px 22px;border-radius:10px;font-size:13px;z-index:9999;letter-spacing:0.3px;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:toastIn 0.25s ease;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 1400);
+}
+
+// ===== SIDEBAR =====
+document.querySelectorAll('.sidebar-nav a').forEach(a => {
+  a.addEventListener('click', function() {
+    document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ===== FEATURE ACCORDION =====
+document.querySelectorAll('.feature').forEach(f => {
+  if (f.classList.contains('open')) {
+    f.querySelector('.feature-body').style.display = 'block';
+  }
+});
+
+// Toast keyframe
+const style = document.createElement('style');
+style.textContent = '@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+document.head.appendChild(style);
+</script>
+</body>
+</html>
